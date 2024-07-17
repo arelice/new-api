@@ -135,7 +135,7 @@ const SiderBar = () => {
       },
       {
         text: '绘图',
-        itemKey: 'midjourney',
+        itemKey: 'midjourney'
         to: '/midjourney',
         icon: <IconImage />,
         className:
