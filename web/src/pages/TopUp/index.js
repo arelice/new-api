@@ -25,7 +25,7 @@ import { Link } from 'react-router-dom';
 const TopUp = () => {
   const [redemptionCode, setRedemptionCode] = useState('');
   const [topUpCode, setTopUpCode] = useState('');
-  const [topUpCount, setTopUpCount] = useState(0);
+  const [topUpCount, setTopUpCount] = useState(10); // 默认设置为10
   const [minTopupCount, setMinTopUpCount] = useState(1);
   const [amount, setAmount] = useState(0.0);
   const [minTopUp, setMinTopUp] = useState(1);
@@ -251,9 +251,7 @@ const TopUp = () => {
                     type={'number'}
                     value={topUpCount}
                     onChange={async (value) => {
-                      if (value === '' || value === undefined) {
-                        value = 10;
-                      } else if (value < 1) {
+                      if (value < 1) {
                         value = 1;
                       }
                       setTopUpCount(value);
