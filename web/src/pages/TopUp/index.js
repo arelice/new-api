@@ -251,7 +251,9 @@ const TopUp = () => {
                     type={'number'}
                     value={topUpCount}
                     onChange={async (value) => {
-                      if (value < 1) {
+                      if (value === '' || value === undefined) {
+                        value = 10;
+                      } else if (value < 1) {
                         value = 1;
                       }
                       setTopUpCount(value);
