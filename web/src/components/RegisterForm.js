@@ -78,7 +78,7 @@ const RegisterForm = () => {
         if (loginSuccess) {
           // 更新用户状态
           localStorage.setItem('user', JSON.stringify(data));
-          navigate('/');
+          navigate('/topup');
           showSuccess('注册并登录成功！');
         } else {
           showError(loginMessage);
