@@ -81,6 +81,7 @@ const RegisterForm = () => {
           // 强制页面重渲染
           window.location.reload();
           navigate('/topup');
+          showSuccess('欢迎来到RJL API！');
         } else {
           showError(loginMessage);
           navigate('/login');
