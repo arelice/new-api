@@ -24,6 +24,7 @@ import { Layout } from '@douyinfe/semi-ui';
 import Midjourney from './pages/Midjourney';
 import Pricing from './pages/Pricing/index.js';
 import Task from "./pages/Task/index.js";
+// import Detail from './pages/Detail';
 import TokensTable2 from './components/TokensTable2'; // 新增导入
 
 const Home = lazy(() => import('./pages/Home'));
