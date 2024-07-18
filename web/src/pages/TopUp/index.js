@@ -244,8 +244,9 @@ const TopUp = () => {
                     disabled={!enableOnlineTopUp}
                     field={'redemptionCount'}
                     label={'实付金额：' + renderAmount()}
+                    
                     placeholder={
-                      '充值数量，最低 ' + renderQuotaWithAmount(minTopUp)
+                      '输入充值数量，最低 ' + renderQuotaWithAmount(minTopUp)
                     }
                     name='redemptionCount'
                     type={'number'}
