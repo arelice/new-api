@@ -30,7 +30,7 @@ func OpenAIErrorWrapper(err error, code string, statusCode int) *dto.OpenAIError
 	// 定义一个正则表达式匹配URL
 	if strings.Contains(text, "Post") || strings.Contains(text, "dial") {
 		common.SysLog(fmt.Sprintf("error: %s", text))
-		text = "请求上游地址失败"
+		text = "请求失败"
 	}
 	//避免暴露内部错误
 
@@ -94,7 +94,7 @@ func TaskErrorWrapper(err error, code string, statusCode int) *dto.TaskError {
 	// 定义一个正则表达式匹配URL
 	if strings.Contains(text, "Post") || strings.Contains(text, "dial") {
 		common.SysLog(fmt.Sprintf("error: %s", text))
-		text = "请求上游地址失败"
+		text = "请求失败"
 	}
 	//避免暴露内部错误
 
