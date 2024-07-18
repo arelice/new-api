@@ -69,8 +69,21 @@ const RegisterForm = () => {
       );
       const { success, message } = res.data;
       if (success) {
-        navigate('/login');
-        showSuccess('注册成功！');
+        // 注册成功后立即进行登录
+        const loginRes = await API.post(
+          `/api/user/login?turnstile=${turnstileToken}`,
+          { username, password }
+        );
+        const { success: loginSuccess, message: loginMessage, data } = loginRes.data;
+        if (loginSuccess) {
+          // 更新用户状态
+          localStorage.setItem('user', JSON.stringify(data));
+          navigate('/');
+          showSuccess('注册并登录成功！');
+        } else {
+          showError(loginMessage);
+          navigate('/login');
+        }
       } else {
         showError(message);
       }
