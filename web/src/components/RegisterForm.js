@@ -78,8 +78,9 @@ const RegisterForm = () => {
         if (loginSuccess) {
           // 更新用户状态
           localStorage.setItem('user', JSON.stringify(data));
+          // 强制页面重渲染
+          window.location.reload();
           navigate('/topup');
-          showSuccess('注册并登录成功！');
         } else {
           showError(loginMessage);
           navigate('/login');
