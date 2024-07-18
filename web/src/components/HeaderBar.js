@@ -76,6 +76,7 @@ const HeaderBar = () => {
         <div style={{ width: '100%' }}>
           <Nav
             mode={'horizontal'}
+          // bodyStyle={{ height: 100 }}
             renderWrapper={({ itemElement, isSubNav, isInSubNav, props }) => {
               const routerMap = {
                 login: '/login',
@@ -92,6 +93,7 @@ const HeaderBar = () => {
               );
             }}
             selectedKeys={[]}
+            // items={headerButtons}
             onSelect={(key) => {}}
             footer={
               <>
