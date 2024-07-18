@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"one-api/common"
 	"one-api/dto"
@@ -56,32 +55,10 @@ func RelayErrorHandler(resp *http.Response) (errWithStatusCode *dto.OpenAIErrorW
 	errWithStatusCode = &dto.OpenAIErrorWithStatusCode{
 		StatusCode: resp.StatusCode,
 		Error: dto.OpenAIError{
-			Type:  "upstream_error",
-			Code:  "bad_response_status_code",
-			Param: strconv.Itoa(resp.StatusCode),
+			Message: "请稍后再试试，如长时间不可用，请通知管理员q2411728460 进行处理",
+			Type:    "model_unavailable",
+			Code:    "model_unavailable",
 		},
-	}
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		return
-	}
-	var errResponse dto.GeneralErrorResponse
-	err = json.Unmarshal(responseBody, &errResponse)
-	if err != nil {
-		return
-	}
-	if errResponse.Error.Message != "" {
-		// OpenAI format error, so we override the default one
-		errWithStatusCode.Error = errResponse.Error
-	} else {
-		errWithStatusCode.Error.Message = errResponse.ToMessage()
-	}
-	if errWithStatusCode.Error.Message == "" {
-		errWithStatusCode.Error.Message = fmt.Sprintf("bad response status code %d", resp.StatusCode)
 	}
 	return
 }
