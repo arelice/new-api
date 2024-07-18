@@ -78,8 +78,9 @@ const RegisterForm = () => {
         if (loginSuccess) {
           // 更新用户状态
           localStorage.setItem('user', JSON.stringify(data));
-          navigate('/topup');
           showSuccess('欢迎来到RJLAPI！');
+          // 设置导航目标并重新加载页面
+          window.location.href = '/topup';
         } else {
           showError(loginMessage);
           navigate('/login');
