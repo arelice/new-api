@@ -90,7 +90,7 @@ const Home = () => {
                       target='_blank'
                       rel='noreferrer'
                     >
-                      https://github.com/Calcium-Ion/new-api
+                      https://api.raojialong.space
                     </a>
                   </p>
                   <p>
