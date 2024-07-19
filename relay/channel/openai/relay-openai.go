@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/bytedance/gopkg/util/gopool"
 	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
@@ -15,11 +16,12 @@ import (
 	relayconstant "one-api/relay/constant"
 	"one-api/service"
 	"strings"
+	"sync"
 	"time"
 )
 
-func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*dto.OpenAIErrorWithStatusCode, *dto.Usage) {
-	hasStreamUsage := false
+func OaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*dto.OpenAIErrorWithStatusCode, *dto.Usage) {
+	containStreamUsage := false
 	responseId := ""
 	var createAt int64 = 0
 	var systemFingerprint string
@@ -40,8 +42,11 @@ func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 
 	stopChan := make(chan bool)
 	defer close(stopChan)
-
-	go func() {
+	var (
+		lastStreamData string
+		mu             sync.Mutex
+	)
+	gopool.Go(func() {
 		for scanner.Scan() {
 			info.SetFirstResponseTime()
 			ticker.Reset(time.Duration(constant.StreamingTimeout) * time.Second)
@@ -52,17 +57,22 @@ func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 			if data[:6] != "data: " && data[:6] != "[DONE]" {
 				continue
 			}
+			mu.Lock()
 			data = data[6:]
 			if !strings.HasPrefix(data, "[DONE]") {
-				err := service.StringData(c, data)
-				if err != nil {
-					common.LogError(c, "streaming error: "+err.Error())
+				if lastStreamData != "" {
+					err := service.StringData(c, lastStreamData)
+					if err != nil {
+						common.LogError(c, "streaming error: "+err.Error())
+					}
 				}
+				lastStreamData = data
 				streamItems = append(streamItems, data)
 			}
+			mu.Unlock()
 		}
 		common.SafeSendBool(stopChan, true)
-	}()
+	})
 
 	select {
 	case <-ticker.C:
@@ -70,6 +80,20 @@ func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 		common.LogError(c, "streaming timeout")
 	case <-stopChan:
 		// 正常结束
+	}
+
+	shouldSendLastResp := true
+	var lastStreamResponse dto.ChatCompletionsStreamResponse
+	err := json.Unmarshal(common.StringToByteSlice(lastStreamData), &lastStreamResponse)
+	if err == nil {
+		if lastStreamResponse.Usage != nil && service.ValidUsage(lastStreamResponse.Usage) {
+			if !info.ShouldIncludeUsage {
+				shouldSendLastResp = false
+			}
+		}
+	}
+	if shouldSendLastResp {
+		service.StringData(c, lastStreamData)
 	}
 
 	// 计算token
@@ -91,7 +115,7 @@ func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 					model = streamResponse.Model
 					if service.ValidUsage(streamResponse.Usage) {
 						usage = streamResponse.Usage
-						hasStreamUsage = true
+						containStreamUsage = true
 					}
 					for _, choice := range streamResponse.Choices {
 						responseTextBuilder.WriteString(choice.Delta.GetContentString())
@@ -115,7 +139,7 @@ func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 				model = streamResponse.Model
 				if service.ValidUsage(streamResponse.Usage) {
 					usage = streamResponse.Usage
-					hasStreamUsage = true
+					containStreamUsage = true
 				}
 				for _, choice := range streamResponse.Choices {
 					responseTextBuilder.WriteString(choice.Delta.GetContentString())
@@ -155,12 +179,12 @@ func OpenaiStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 		}
 	}
 
-	if !hasStreamUsage {
+	if !containStreamUsage {
 		usage, _ = service.ResponseText2Usage(responseTextBuilder.String(), info.UpstreamModelName, info.PromptTokens)
 		usage.CompletionTokens += toolCount * 7
 	}
 
-	if info.ShouldIncludeUsage && !hasStreamUsage {
+	if info.ShouldIncludeUsage && !containStreamUsage {
 		response := service.GenerateFinalUsageResponse(responseId, createAt, model, *usage)
 		response.SetSystemFingerprint(systemFingerprint)
 		service.ObjectData(c, response)
